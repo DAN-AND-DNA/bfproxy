@@ -1,6 +1,6 @@
 # bfproxy
 
-A tiny multi-threaded server for saving protobuf data to mysql; very fast;
+A tiny multi-threaded server for saving protobuf data to mysql; very fast; c++11
 
 
 Thanks:
