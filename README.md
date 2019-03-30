@@ -15,6 +15,7 @@ Thanks:
        0. protobuf https://github.com/protocolbuffers/protobuf
        1. spdlog https://github.com/gabime/spdlog
        2. message_queue https://github.com/LnxPrgr3/message_queue
+       3. eventloop inspired by https://github.com/chenshuo/muduo
 
 Install:
 
