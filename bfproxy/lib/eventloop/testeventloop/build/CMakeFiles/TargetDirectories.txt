@@ -1,0 +1,3 @@
+/home/dan/work/bfproxyv2/lib/eventloop/testeventloop/build/CMakeFiles/rebuild_cache.dir
+/home/dan/work/bfproxyv2/lib/eventloop/testeventloop/build/CMakeFiles/edit_cache.dir
+/home/dan/work/bfproxyv2/lib/eventloop/testeventloop/build/CMakeFiles/testeventloop.dir
