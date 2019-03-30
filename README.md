@@ -4,8 +4,9 @@ A tiny multi-threaded server for saving protobuf data to mysql; very fast; c++11
 
 Architecture:
 
-       0. master thread dispatch a msg to message queue;
-       1. threads of worker pool finish the msg or report a error;
+       0. master thread dispatch all messages to message queue (very fast);
+       1. threads of worker pool finish all messages or report errors;
+
 
 Thanks:
 
