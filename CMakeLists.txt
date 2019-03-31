@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.2)
 project(bfproxy)
 
 set(CMAKE_BUILD_TYPE "release")
-set(BF_PATH "/home/$ENV{USER}/work/bfproxyv")
+set(BF_PATH "/home/$ENV{USER}/work/bfproxy")
 
 set(CXX_FLAGS
  -std=c++0x                     # c+11
@@ -42,9 +42,9 @@ file(GLOB DB "${CMAKE_CURRENT_SOURCE_DIR}/lib/db/*.c*")
 file(GLOB LOG "${CMAKE_CURRENT_SOURCE_DIR}/lib/log/*.cpp")
 file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-add_executable(bfproxyv2 ${LOG} ${SRC} ${EVENTLOOP} ${THREADMQ} ${DB})
+add_executable(bfproxyv ${LOG} ${SRC} ${EVENTLOOP} ${THREADMQ} ${DB})
 
-target_link_libraries(bfproxyv2 pthread dl m)
-target_link_libraries(bfproxyv2 /usr/lib64/mysql/libmysqlclient.a)
+target_link_libraries(bfproxyv pthread dl m)
+target_link_libraries(bfproxyv /usr/lib64/mysql/libmysqlclient.a)
 #TARGET_LINK_LIBRARIES(lubot ${CMAKE_CURRENT_SOURCE_DIR}/deps/protobuf/lib/libprotobuf.a)
 

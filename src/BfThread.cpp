@@ -269,7 +269,7 @@ void BfThread::DoJob()
                     uint8_t dwOpenidLen = *(reinterpret_cast<uint8_t*>(pstMsg->pstData + 8));
                     std::string strOpenid(reinterpret_cast<char*>(pstMsg->pstData + 9), dwOpenidLen);
 
-                    dan::log::BFLog::DEBUG("insert openid len:{}, userid:{}, openid:{}\n", dwOpenidLen, ulUserid, strOpenid);
+                    dan::log::BFLog::INFO("insert openid len:{}, userid:{}, openid:{}\n", dwOpenidLen, ulUserid, strOpenid);
                     auto iResLen = pstDBConn->Insert(ulUserid, strOpenid, pstMsg->pstData + 9 + dwOpenidLen, pstMsg->dwLen - 9 - dwOpenidLen);
                     if(likely(iResLen == 0))
                     {

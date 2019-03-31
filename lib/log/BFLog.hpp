@@ -20,7 +20,7 @@ public:
 #ifdef RELEASE
 
         spdlog::init_thread_pool(8192, 1);
-        this->m_pstLogger = spdlog::daily_logger_mt<spdlog::async_factory>("bf_db", "./bf_db.lg", 0, 0);
+        this->m_pstLogger = spdlog::daily_logger_mt<spdlog::async_factory>("bf_db", "./bf_db.log", 0, 0);
 #else
 
 #endif
