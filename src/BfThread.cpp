@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 namespace {
-    std::shared_ptr<dan::pool::LuPool<dan::db::AnMysql>> m_pstDBPool(new dan::pool::LuPool<dan::db::AnMysql>("dbpool", 30));
+    std::shared_ptr<dan::pool::LuPool<dan::db::AnMysql>> m_pstDBPool(new dan::pool::LuPool<dan::db::AnMysql>("dbpool", 12));
 }
 
 namespace dan { namespace bf {
@@ -182,7 +182,7 @@ void BfThread::DoJob()
                     int  iConnFd = pstMsg->iConnFd;
                     uint16_t dwReqSeq = pstMsg->dwSeq;
                    
-                    //dan::log::BFLog::INFO("select by openid:{} {}", strOpenid, common::Now2Us());
+                    dan::log::BFLog::INFO("select by openid:{}", strOpenid);
                     auto iResLen = pstDBConn->Select(strOpenid, this->m_stS2SBuffer);
                     //int iResLen = 0;
 
@@ -263,6 +263,94 @@ void BfThread::DoJob()
                         break;
                     }
                 }
+                case SELECT_BY_OPENID1:
+                {
+                    std::string strOpenid(reinterpret_cast<char*>(pstMsg->pstData), pstMsg->dwLen);
+                    int  iConnFd = pstMsg->iConnFd;
+                    uint16_t dwReqSeq = pstMsg->dwSeq;
+                   
+                    dan::log::BFLog::INFO("select1 by openid:{}", strOpenid);
+                    auto iResLen = pstDBConn->Select1(strOpenid, this->m_stS2SBuffer);
+                    //int iResLen = 0;
+
+                    //int iResLen = 0;
+                    if(iConnFd > 0)
+                    {
+                        if(likely(iResLen >= 0 && iResLen < 512))
+                        {
+                            uint8_t dwCmd = SUCCESS;
+                            uint16_t dwLen = ::htons(static_cast<uint16_t>(iResLen));
+                            uint16_t dwResSeq = ::htons(dwReqSeq);
+                            ::memcpy(m_stC2SBuffer, &dwLen, 2);
+                            ::memcpy(m_stC2SBuffer + 2, &dwCmd, 1);
+                            ::memcpy(m_stC2SBuffer + 3, &dwResSeq, 2);
+                            ::memcpy(m_stC2SBuffer + 5, this->m_stS2SBuffer, iResLen);
+
+                            auto sended =  dan::eventloop::AnSocket::Send(iConnFd, this->m_stC2SBuffer, iResLen + 5);
+
+
+                            if(likely(sended == iResLen + 5))
+                            {
+                            }
+                            else if(sended < 0)
+                            {
+                                // error notify main thread close this fd
+                                struct dan::msg::WorkerMsg* pstErrorMsg = static_cast<struct dan::msg::WorkerMsg*>(::message_queue_message_alloc_blocking(&BfThread::stPendingQueue));
+                                pstErrorMsg->iErrno = errno;
+                                pstErrorMsg->iConnFd = pstMsg->iConnFd;
+                                pstErrorMsg->ulSessionId = pstMsg->ulSessionId;
+                                pstErrorMsg->dwCmd = ERROR;
+                                ::message_queue_write(&BfThread::stPendingQueue, pstErrorMsg);
+                                auto n = dan::eventloop::AnSocket::Write(BfThread::iEpollFd, &i, sizeof i);
+                                if(n != sizeof i)
+                                {
+                                    ::message_queue_message_free(&BfThread::stPendingQueue, pstErrorMsg);
+                                }
+
+                            }
+                            else if(iResLen + 5 > sended)
+                            {
+                                // notify main thread the socket buffer is full
+                                struct dan::msg::WorkerMsg* pstPendingMsg = static_cast<struct dan::msg::WorkerMsg*>(::message_queue_message_alloc_blocking(&BfThread::stPendingQueue));
+                                pstPendingMsg->iConnFd = pstMsg->iConnFd;
+                                pstPendingMsg->ulSessionId = pstMsg->ulSessionId;
+                                pstPendingMsg->dwCmd = PENDING;
+                                ::memcpy(pstPendingMsg->pstData, this->m_stC2SBuffer + sended, (dwLen + 5 - sended));
+
+                                ::message_queue_write(&BfThread::stPendingQueue, pstPendingMsg);
+                                auto n = dan::eventloop::AnSocket::Write(BfThread::iEpollFd, &i, sizeof i);
+                                if(n != sizeof i)
+                                {
+                                    ::message_queue_message_free(&BfThread::stPendingQueue, pstPendingMsg);
+                                }
+                            }
+                            unfinished = false;
+                            break;
+                        }
+                        else if(iResLen >= 512)
+                        {
+                            //TODO too big
+                            unfinished = false;
+                            break;
+                        }
+                        else
+                        {
+                            //db failed
+                            pstDBConn = nullptr;
+                            pstDBConn = m_pstDBPool->GetIdle();
+                           
+                            unfinished = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // bad fd
+                        unfinished = false;
+                        break;
+                    }
+                }
+
                 case INSERT:
                 {
                     uint64_t ulUserid = *(reinterpret_cast<uint64_t*>(pstMsg->pstData));
@@ -270,7 +358,7 @@ void BfThread::DoJob()
                     std::string strOpenid(reinterpret_cast<char*>(pstMsg->pstData + 9), dwOpenidLen);
 
                     dan::log::BFLog::INFO("insert openid len:{}, userid:{}, openid:{}\n", dwOpenidLen, ulUserid, strOpenid);
-                    auto iResLen = pstDBConn->Insert(ulUserid, strOpenid, pstMsg->pstData + 9 + dwOpenidLen, pstMsg->dwLen - 9 - dwOpenidLen);
+                    auto iResLen = pstDBConn->Insert1(ulUserid, strOpenid, pstMsg->pstData + 9 + dwOpenidLen, pstMsg->dwLen - 9 - dwOpenidLen);
                     if(likely(iResLen == 0))
                     {
                      // do nothing
@@ -285,6 +373,29 @@ void BfThread::DoJob()
                         break;
                     }
                 }
+                case INSERT1:
+                {
+                    uint64_t ulUserid = *(reinterpret_cast<uint64_t*>(pstMsg->pstData));
+                    uint8_t dwOpenidLen = *(reinterpret_cast<uint8_t*>(pstMsg->pstData + 8));
+                    std::string strOpenid(reinterpret_cast<char*>(pstMsg->pstData + 9), dwOpenidLen);
+
+                    dan::log::BFLog::INFO("insert2 openid len:{}, userid:{}, openid:{}\n", dwOpenidLen, ulUserid, strOpenid);
+                    auto iResLen = pstDBConn->Insert2(ulUserid, strOpenid, pstMsg->pstData + 9 + dwOpenidLen, pstMsg->dwLen - 9 - dwOpenidLen);
+                    if(likely(iResLen == 0))
+                    {
+                     // do nothing
+                        unfinished = false;
+                        break;
+                    }      
+                    else
+                    {
+                        pstDBConn = nullptr;
+                        pstDBConn = m_pstDBPool->GetIdle();
+                        unfinished = true;
+                        break;
+                    }
+                }
+     
                 case CLOSE:
                 {
              //       printf("get close msg\n");

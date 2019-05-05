@@ -42,9 +42,8 @@ file(GLOB DB "${CMAKE_CURRENT_SOURCE_DIR}/lib/db/*.c*")
 file(GLOB LOG "${CMAKE_CURRENT_SOURCE_DIR}/lib/log/*.cpp")
 file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-add_executable(bfproxyv ${LOG} ${SRC} ${EVENTLOOP} ${THREADMQ} ${DB})
+add_executable(bfproxy ${LOG} ${SRC} ${EVENTLOOP} ${THREADMQ} ${DB})
 
-target_link_libraries(bfproxyv pthread dl m)
-target_link_libraries(bfproxyv /usr/lib64/mysql/libmysqlclient.a)
-#TARGET_LINK_LIBRARIES(lubot ${CMAKE_CURRENT_SOURCE_DIR}/deps/protobuf/lib/libprotobuf.a)
+target_link_libraries(bfproxy pthread dl m)
+target_link_libraries(bfproxy /usr/lib64/mysql/libmysqlclient.a)
 

@@ -21,7 +21,8 @@ namespace dan { namespace bf {
 #define ERROR 3
 #define BADCMD 4
 #define SELECT_BY_OPENID 5
-
+#define INSERT1 6
+#define SELECT_BY_OPENID1 7
 
 #define SO_BIG 6
 #define DB_ERROR 7

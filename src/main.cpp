@@ -6,7 +6,8 @@
 
 namespace 
 {
-    auto pstServer = std::make_shared<dan::bf::BfDBServer>("192.168.0.45", 3737);
+    //auto pstServer = std::make_shared<dan::bf::BfDBServer>("192.168.0.45", 3737);
+    auto pstServer = std::make_shared<dan::bf::BfDBServer>("0.0.0.0", 3737);
 }
 
 void ErrorHandle(int)
